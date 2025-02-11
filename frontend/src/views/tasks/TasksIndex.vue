@@ -9,6 +9,7 @@ type Task = {
     description: string;
     status: string;
     category: string;
+    due_date: string | null;
     deleted_at: string | null;
 } 
 const tasks = ref<Task[]>([]);
@@ -16,6 +17,39 @@ const searchQuery = ref<string>('');
 const pagination = ref({ current_page: 1, last_page: 1 });
 const sortBy = ref<string>('created_at'); 
 const sortOrder = ref<string>('asc'); 
+
+// New Filter Variables
+const filterStatus = ref<string>(''); // Status filter
+const filterCategory = ref<string>(''); // Category filter
+const showDeleted = ref<boolean>(false); // Show deleted filter
+const filterDueDateFrom = ref<string>(''); // ✅ Start Date Filter
+const filterDueDateTo = ref<string>('');   // ✅ End Date Filter
+
+const fetchTasks = async (page = 1) => {
+    try {
+        const response = await axiosInstance.get(`/tasks`, {
+            params: {
+                page,
+                search: searchQuery.value,
+                sortBy: sortBy.value,
+                sortOrder: sortOrder.value,
+                status: filterStatus.value,
+                category: filterCategory.value,
+                due_date_from: filterDueDateFrom.value, // ✅ Include Due Date Range
+                due_date_to: filterDueDateTo.value,
+                deleted: showDeleted.value ? 1 : 0,
+            },
+        });
+
+        tasks.value = response.data.data;
+        pagination.value = {
+            current_page: response.data.current_page,
+            last_page: response.data.last_page,
+        };
+    } catch (error) {
+        console.error("Error fetching tasks:", error);
+    }
+};
 
 // onMounted(async () => {
 //     try {
@@ -27,25 +61,51 @@ const sortOrder = ref<string>('asc');
 // })
 
 // Fetch tasks with pagination, search, and sorting
-const fetchTasks = async (page = 1) => {
-    try {
-        const response = await axiosInstance.get(`/tasks?page=${page}&search=${searchQuery.value}&sortBy=${sortBy.value}&sortOrder=${sortOrder.value}`);
-        tasks.value = response.data.data;
-        pagination.value = {
-            current_page: response.data.current_page,
-            last_page: response.data.last_page,
-        };
-    } catch (error) {
-        console.error("Error fetching tasks:", error);
-    }
-};
+// Fetch tasks with filters, search, and sorting
+// const fetchTasks = async (page = 1) => {
+//     try {
+//         const response = await axiosInstance.get(`/tasks`, {
+//             params: {
+//                 page,
+//                 search: searchQuery.value,
+//                 sortBy: sortBy.value,
+//                 sortOrder: sortOrder.value,
+//                 status: filterStatus.value, 
+//                 category: filterCategory.value, 
+//                 deleted: showDeleted.value ? 1 : 0, 
+//             },
+//         });
+
+//         tasks.value = response.data.data;
+//         pagination.value = {
+//             current_page: response.data.current_page,
+//             last_page: response.data.last_page,
+//         };
+//     } catch (error) {
+//         console.error("Error fetching tasks:", error);
+//     }
+// };
 
 // Fetch tasks on mount
 onMounted(() => fetchTasks());
 
 // Watch for search or sort changes
-watch([searchQuery, sortBy, sortOrder], () => fetchTasks(1)); 
+// Watch for changes and update tasks dynamically
+watch([searchQuery, sortBy, sortOrder, filterStatus, filterCategory, showDeleted], () => fetchTasks(1));
 
+
+// Clear All Filters
+const clearFilters = () => {
+    searchQuery.value = '';
+    filterStatus.value = '';
+    filterCategory.value = '';
+    filterDueDateFrom.value = ''; // ✅ Clear Start Date
+    filterDueDateTo.value = '';   // ✅ Clear End Date
+    showDeleted.value = false;
+    sortBy.value = 'created_at';
+    sortOrder.value = 'asc';
+    fetchTasks(1);
+};
 
 
 const changePage = (page: number) => {
@@ -90,6 +150,40 @@ const statusClass = (status: string) => `status-${status}`;
             class="px-4 py-2  border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
 
 
+        <!-- Filters -->
+        <select v-model="filterStatus" class="px-3 py-2 border rounded-md shadow-sm">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+        </select>
+        <select v-model="filterCategory" class="px-3 py-2 border rounded-md shadow-sm">
+                <option value="">All Categories</option>
+                <option value="Work">Work</option>
+                <option value="Personal">Personal</option>
+                <option value="Urgent">Urgent</option>
+        </select>
+
+        <div class="flex items-center space-x-4">
+            <!-- Start Date -->
+            <div>
+                <label class="block text-sm font-medium">Due Date From</label>
+                <input v-model="filterDueDateFrom" type="date" 
+                    class="px-4 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+            </div>
+
+            <!-- End Date -->
+            <div>
+                <label class="block text-sm font-medium">Due Date To</label>
+                <input v-model="filterDueDateTo" type="date" 
+                    class="px-4 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+            </div>
+        </div>
+
+        <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" v-model="showDeleted" class="cursor-pointer">
+                <span>Show Deleted</span>
+        </label>
+
 
          <!-- Sorting Dropdowns -->
         <div class="flex space-x-2">
@@ -98,6 +192,7 @@ const statusClass = (status: string) => `status-${status}`;
                 <option value="description">Description</option>
                 <option value="status">Status</option>
                 <option value="category">Category</option>
+                <option value="due_date">Due Date</option>
                 <option value="created_at">Created At</option>
                 <option value="updated_at">Updated At</option>
             </select>
@@ -107,6 +202,12 @@ const statusClass = (status: string) => `status-${status}`;
                 <option value="desc">Descending</option>
             </select>
         </div>
+
+        <!-- Clear Filters Button -->
+        <button @click="clearFilters"
+            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">
+            Clear Filters
+        </button>
         
         <RouterLink :to="{ name: 'TaskCreate' }" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Create Task</RouterLink>
     </div>
@@ -120,6 +221,7 @@ const statusClass = (status: string) => `status-${status}`;
                         <th scope="col" class="px-6 py-3">Description</th>
                         <th scope="col" class="px-6 py-3">Category</th>
                         <th scope="col" class="px-6 py-3">Status</th>
+                        <th>Due Date</th> <!-- ✅ New Column -->
                         <th scope="col" class="px-6 py-3 text-center">Actions</th>
                     </tr>
                 </thead>
@@ -141,24 +243,31 @@ const statusClass = (status: string) => `status-${status}`;
                                 {{ task.status }}
                             </span>
                         </td>
+                        <td>
+                            {{ task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date' }}
+                        </td>
                         <td class="px-6 py-4 text-center">
                             <div class="flex items-center space-x-2 justify-center">
-                                <!-- Edit Button -->
-                                <RouterLink :to="{ name: 'TaskEdit', params: { id: task.id } }"
-                                    class="px-3 py-1 text-white bg-yellow-500 rounded-md">Edit</RouterLink>
-
-                                <!-- Delete Button (Only if Task is NOT Soft-Deleted) -->
+                                
+                            <RouterLink 
+                                :to="{ name: 'TaskEdit', params: { id: task.id } }"
+                                class="px-3 py-1 rounded-md transition duration-300"
+                                :class="task.deleted_at ? 'bg-gray-400 text-gray-300 cursor-not-allowed pointer-events-none' : 'bg-yellow-500 text-white hover:bg-yellow-600'"
+                            >
+                                Edit
+                            </RouterLink>
+                                
                                 <button v-if="!task.deleted_at" @click="deleteTask(task.id)"
                                     class="px-3 py-1 text-white bg-red-500 rounded-md">Delete</button>
 
-                                <!-- Restore Button (Only if Task IS Soft-Deleted) -->
+                                
                                 <button v-else @click="restoreTask(task.id)"
                                     class="px-3 py-1 text-white bg-green-500 rounded-md">Restore</button>
                             </div>
                         </td>
                     </tr>
 
-                    <!-- Pagination Controls -->
+                    
                     <div class="flex justify-center space-x-2 mt-4">
                         <button @click="changePage(pagination.current_page - 1)" 
                             :disabled="pagination.current_page === 1"

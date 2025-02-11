@@ -3,20 +3,20 @@
 
 <template>
   <main class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 py-12 px-4">
-    <!-- Hero Section -->
+    
     <div class="max-w-4xl w-full text-center">
-      <!-- Headline -->
+      
       <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
         Organize Your Life with
         <span class="text-indigo-600">TO-DO List</span>
       </h1>
 
-      <!-- Description -->
+      
       <p class="text-lg text-gray-600 mb-8">
         Stay productive and never miss a task again. Our simple and intuitive TO-DO List app helps you manage your tasks efficiently, whether it's for work, study, or personal goals.
       </p>
 
-      <!-- Call-to-Action Buttons -->
+      
       <div class="flex justify-center space-x-4">
         <RouterLink
           to="/register"
@@ -33,7 +33,7 @@
       </div>
     </div>
 
-    <!-- Image Section -->
+    
     <div class="mt-12 max-w-4xl w-full text-center">
       <img
         src="https://cdn.pixabay.com/photo/2021/08/04/13/06/software-developer-6521720_1280.jpg"

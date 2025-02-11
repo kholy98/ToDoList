@@ -11,7 +11,9 @@ type TaskForm = {
     description: string;
     status: string;
     category: string;
+    due_date: string | null; 
 };
+
 
 
 
@@ -57,6 +59,14 @@ const createTask = async (payload: TaskForm, node?: FormKitNode) => {
                 :options="['Work', 'Personal', 'Urgent']"
                 placeholder="Select category"
             />
+            <FormKit
+                type="date"
+                label="Due Date"
+                name="due_date"
+                validation="required"
+                placeholder="Select a due date"
+            />
         </FormKit>
+
     </div>
 </template>

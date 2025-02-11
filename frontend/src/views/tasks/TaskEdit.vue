@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { FormKit } from '@formkit/vue';
 import type { FormKitNode } from '@formkit/core';
-import axios from 'axios';
+import axiosInstance from '@/lib/axios';
 import router from '@/router';
 import { AxiosError } from 'axios';
-import axiosInstance from '@/lib/axios';
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -13,6 +12,7 @@ type TaskForm = {
     description: string;
     status: string;
     category: string;
+    due_date: string | null; // ✅ Added due_date
 };
 
 // Get Task ID from URL
@@ -24,7 +24,8 @@ const task = ref<TaskForm>({
     title: '',
     description: '',
     status: 'pending',
-    category: 'Personal'
+    category: 'Personal',
+    due_date: null // ✅ Initialize due_date
 });
 
 // Fetch Task Data from API
@@ -77,6 +78,15 @@ const updateTask = async (payload: TaskForm, node?: FormKitNode) => {
                 validation="required"
                 :options="['Work', 'Personal', 'Urgent']"
                 placeholder="Select category"
+            />
+
+            <!-- ✅ Due Date Field -->
+            <FormKit
+                type="date"
+                label="Due Date"
+                name="due_date"
+                validation="required"
+                placeholder="Select a due date"
             />
         </FormKit>
     </div>

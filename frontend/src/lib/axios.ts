@@ -2,6 +2,7 @@ import router from "@/router";
 import { useAuthStore } from "@/store/auth";
 import axios from "axios";
 
+
 const axiosInstance = axios.create({
     baseURL: "http://localhost:8000/api",
     withCredentials: true,
@@ -13,7 +14,8 @@ axiosInstance.interceptors.response.use(
         return response;
     },
     async (error) => {
-        const auth = useAuthStore();
+        const auth = useAuthStore(); 
+        const message = error.response.data.message || "An unexpected error occurred";   
         switch(error.response.status){
             case 401:
                 auth.cleanState();

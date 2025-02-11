@@ -1,35 +1,42 @@
 <script setup lang="ts">
-    import axiosInstance from '@/lib/axios';
-    import type { User } from '@/types';
-    import { onMounted, ref } from 'vue';
-    import { useAuthStore } from '@/store/auth';
+import { onMounted } from 'vue';
+import { useAuthStore } from '@/store/auth';
 
-    const auth = useAuthStore();
+const auth = useAuthStore();
 
-    onMounted(()=> {
-        if(!auth.isLoggedIn){
-            auth.getUser();
-        }
-    });
-
+onMounted(() => {
+    if (!auth.isLoggedIn) {
+        auth.getUser();
+    }
+});
 </script>
 
 <template>
-    <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-6">
-        <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-6">Dashboard</h1>
+  <div class="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+      <!-- Welcome Message -->
+      <h1 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">Welcome Back!</h1>
+      <p class="text-gray-600 dark:text-gray-300 mt-2">We're glad to see you again, <span class="font-semibold text-indigo-500">{{ auth.user?.name }}</span>!</p>
 
-        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 w-full max-w-md text-center">
-            <p class="text-lg font-semibold text-gray-700 dark:text-gray-300">
-                Welcome Back, <span class="text-blue-500">{{ auth.user?.name }}</span>
-            </p>
-            <p class="text-md text-gray-600 dark:text-gray-400 mb-4">
-                Email: <span class="font-medium">{{ auth.user?.email }}</span>
-            </p>
+      <!-- User Info Section -->
+      <div class="mt-6 p-4 border border-gray-200 dark:border-gray-700 rounded-md">
+        <p class="text-md text-gray-700 dark:text-gray-300">
+          <span class="font-medium text-gray-900 dark:text-gray-100">Email:</span> {{ auth.user?.email }}
+        </p>
+      </div>
 
-            <button @click="auth.logout" 
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 shadow-md">
-                Logout
-            </button>
-        </div>
+      <!-- Dashboard Actions -->
+      <div class="mt-6 flex flex-col space-y-3">
+        <RouterLink to="/dashboard/tasks" 
+          class="w-full px-4 py-2 bg-indigo-600 text-white font-medium rounded-md shadow-md hover:bg-indigo-700 transition duration-300">
+          View Tasks
+        </RouterLink>
+        
+        <button @click="auth.logout"
+          class="w-full px-4 py-2 bg-red-600 text-white font-medium rounded-md shadow-md hover:bg-red-700 transition duration-300">
+          Logout
+        </button>
+      </div>
     </div>
+  </div>
 </template>

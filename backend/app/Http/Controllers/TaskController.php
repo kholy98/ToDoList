@@ -13,28 +13,68 @@ class TaskController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Task::query();
+        $query = Task::query()->withTrashed(); // ✅ Includes soft deleted tasks
 
         // Apply Search
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->query('search');
-            $query->where('title', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%")
-                  ->orWhere('category', 'LIKE', "%{$search}%")
-                  ->orWhere('status', 'LIKE', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('category', 'LIKE', "%{$search}%")
+                    ->orWhere('status', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // ✅ Apply Filters for Status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // ✅ Apply Filters for Category
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        // ✅ Apply Due Date Filter (Single Date)
+        if ($request->filled('due_date')) {
+            $query->whereDate('due_date', '=', $request->due_date);
+        }
+
+        // ✅ Apply Due Date Range Filter Correctly
+        if ($request->filled('due_date_from') && $request->filled('due_date_to')) {
+            $dueDateFrom = date('Y-m-d', strtotime($request->due_date_from)); // Convert to proper format
+            $dueDateTo = date('Y-m-d', strtotime($request->due_date_to));
+
+            $query->whereBetween('due_date', [$dueDateFrom, $dueDateTo]);
+        } elseif ($request->filled('due_date_from')) {
+            $dueDateFrom = date('Y-m-d', strtotime($request->due_date_from));
+            $query->whereDate('due_date', '>=', $dueDateFrom);
+        } elseif ($request->filled('due_date_to')) {
+            $dueDateTo = date('Y-m-d', strtotime($request->due_date_to));
+            $query->whereDate('due_date', '<=', $dueDateTo);
+        }
+
+        // ✅ Apply Soft Delete Filter (Show Only Deleted Tasks)
+        if ($request->has('deleted') && $request->deleted == 1) {
+            $query->onlyTrashed();
         }
 
         // Apply Sorting
         $sortBy = $request->query('sortBy', 'created_at'); // Default sort column
         $sortOrder = $request->query('sortOrder', 'desc'); // Default order
 
-        if (in_array($sortBy, ['title', 'description', 'status', 'category', 'created_at', 'updated_at']) &&
+        if (in_array($sortBy, ['title', 'description', 'status', 'category', 'due_date', 'created_at', 'updated_at']) &&
             in_array($sortOrder, ['asc', 'desc'])) {
             $query->orderBy($sortBy, $sortOrder);
         }
 
+        // ✅ Return JSON with pagination
         return response()->json($query->paginate(10));
     }
+
+
+
 
     /**
      * Show the form for creating a new resource.
@@ -53,7 +93,8 @@ class TaskController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'in:pending,completed',
-            'category' => 'in:Work,Personal,Urgent'
+            'category' => 'in:Work,Personal,Urgent',
+            'due_date' => 'nullable|date',
         ]);
 
         $task = Task::create($validated);
@@ -86,7 +127,8 @@ class TaskController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|in:pending,completed',
-            'category' => 'required|in:Work,Personal,Urgent'
+            'category' => 'required|in:Work,Personal,Urgent',
+            'due_date' => 'nullable|date',
         ]);
 
         $task->update($validated);
