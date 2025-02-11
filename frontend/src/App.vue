@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from "vue-router";
+import { useAuthStore } from '@/store/auth';
+
+const auth = useAuthStore();
+
 </script>
 
 <template>
@@ -43,6 +47,14 @@ import { RouterLink, RouterView } from "vue-router";
         >
           Register
         </RouterLink>
+
+
+        <button 
+          @click="auth.logout"
+          class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+        >
+          Logout
+        </button>
       </div>
     </nav>
   </header>

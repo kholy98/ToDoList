@@ -10,5 +10,8 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 Route::middleware(['auth:sanctum'])->apiResource('tasks', TaskController::class)
     ->except(['create', 'edit']);
+Route::middleware(['auth:sanctum'])->get('/summary', [TaskController::class, 'summary']);
 Route::middleware(['auth:sanctum'])->patch('/tasks/{id}/restore', [TaskController::class, 'restore']);
+
+
 

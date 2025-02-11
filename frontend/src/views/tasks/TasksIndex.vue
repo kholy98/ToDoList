@@ -18,12 +18,15 @@ const pagination = ref({ current_page: 1, last_page: 1 });
 const sortBy = ref<string>('created_at'); 
 const sortOrder = ref<string>('asc'); 
 
-// New Filter Variables
-const filterStatus = ref<string>(''); // Status filter
-const filterCategory = ref<string>(''); // Category filter
-const showDeleted = ref<boolean>(false); // Show deleted filter
-const filterDueDateFrom = ref<string>(''); // ✅ Start Date Filter
-const filterDueDateTo = ref<string>('');   // ✅ End Date Filter
+// Filter Variables
+const filterStatus = ref<string>(''); 
+const filterCategory = ref<string>(''); 
+const showDeleted = ref<boolean>(false); 
+const filterDueDateFrom = ref<string>(''); 
+const filterDueDateTo = ref<string>('');   
+
+// Modal Control
+const showFilterModal = ref<boolean>(false);
 
 const fetchTasks = async (page = 1) => {
     try {
@@ -35,7 +38,7 @@ const fetchTasks = async (page = 1) => {
                 sortOrder: sortOrder.value,
                 status: filterStatus.value,
                 category: filterCategory.value,
-                due_date_from: filterDueDateFrom.value, // ✅ Include Due Date Range
+                due_date_from: filterDueDateFrom.value, 
                 due_date_to: filterDueDateTo.value,
                 deleted: showDeleted.value ? 1 : 0,
             },
@@ -51,56 +54,25 @@ const fetchTasks = async (page = 1) => {
     }
 };
 
-// onMounted(async () => {
-//     try {
-//         const response = await axiosInstance.get('/tasks');
-//         tasks.value = response.data.data; 
-//     } catch (error) {
-//         console.error("Error fetching tasks:", error);
-//     }
-// })
-
-// Fetch tasks with pagination, search, and sorting
-// Fetch tasks with filters, search, and sorting
-// const fetchTasks = async (page = 1) => {
-//     try {
-//         const response = await axiosInstance.get(`/tasks`, {
-//             params: {
-//                 page,
-//                 search: searchQuery.value,
-//                 sortBy: sortBy.value,
-//                 sortOrder: sortOrder.value,
-//                 status: filterStatus.value, 
-//                 category: filterCategory.value, 
-//                 deleted: showDeleted.value ? 1 : 0, 
-//             },
-//         });
-
-//         tasks.value = response.data.data;
-//         pagination.value = {
-//             current_page: response.data.current_page,
-//             last_page: response.data.last_page,
-//         };
-//     } catch (error) {
-//         console.error("Error fetching tasks:", error);
-//     }
-// };
 
 // Fetch tasks on mount
 onMounted(() => fetchTasks());
 
 // Watch for search or sort changes
-// Watch for changes and update tasks dynamically
 watch([searchQuery, sortBy, sortOrder, filterStatus, filterCategory, showDeleted], () => fetchTasks(1));
 
 
-// Clear All Filters
+const toggleFilterModal = () => {
+    showFilterModal.value = !showFilterModal.value;
+};
+
+
 const clearFilters = () => {
     searchQuery.value = '';
     filterStatus.value = '';
     filterCategory.value = '';
-    filterDueDateFrom.value = ''; // ✅ Clear Start Date
-    filterDueDateTo.value = '';   // ✅ Clear End Date
+    filterDueDateFrom.value = ''; 
+    filterDueDateTo.value = ''; 
     showDeleted.value = false;
     sortBy.value = 'created_at';
     sortOrder.value = 'asc';
@@ -146,68 +118,87 @@ const statusClass = (status: string) => `status-${status}`;
     <div class="flex p-4 justify-between p-4">
 
         
+        
         <input v-model="searchQuery" type="text" placeholder="Search tasks..." 
-            class="px-4 py-2  border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+            class="px-4 py-2 border-2 border-blue-500 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200">
 
 
-        <!-- Filters -->
-        <select v-model="filterStatus" class="px-3 py-2 border rounded-md shadow-sm">
-            <option value="">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-        </select>
-        <select v-model="filterCategory" class="px-3 py-2 border rounded-md shadow-sm">
-                <option value="">All Categories</option>
-                <option value="Work">Work</option>
-                <option value="Personal">Personal</option>
-                <option value="Urgent">Urgent</option>
-        </select>
-
-        <div class="flex items-center space-x-4">
-            <!-- Start Date -->
-            <div>
-                <label class="block text-sm font-medium">Due Date From</label>
-                <input v-model="filterDueDateFrom" type="date" 
-                    class="px-4 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
-            </div>
-
-            <!-- End Date -->
-            <div>
-                <label class="block text-sm font-medium">Due Date To</label>
-                <input v-model="filterDueDateTo" type="date" 
-                    class="px-4 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
-            </div>
-        </div>
-
-        <label class="flex items-center space-x-2 cursor-pointer">
-                <input type="checkbox" v-model="showDeleted" class="cursor-pointer">
-                <span>Show Deleted</span>
-        </label>
-
-
-         <!-- Sorting Dropdowns -->
-        <div class="flex space-x-2">
-            <select v-model="sortBy" class="px-3 py-2 border rounded-md shadow-sm">
-                <option value="title">Title</option>
-                <option value="description">Description</option>
-                <option value="status">Status</option>
-                <option value="category">Category</option>
-                <option value="due_date">Due Date</option>
-                <option value="created_at">Created At</option>
-                <option value="updated_at">Updated At</option>
-            </select>
-
-            <select v-model="sortOrder" class="px-3 py-2 border rounded-md shadow-sm">
-                <option value="asc">Ascending</option>
-                <option value="desc">Descending</option>
-            </select>
-        </div>
-
-        <!-- Clear Filters Button -->
-        <button @click="clearFilters"
-            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">
-            Clear Filters
+         
+         <button @click="toggleFilterModal"
+            class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition">
+            Filters
         </button>
+
+        <!-- Sorting Dropdowns -->
+        <div class="flex items-center space-x-4">
+            <!-- Sort By -->
+            <div>
+                <label class="block text-sm font-medium">Sort By</label>
+                <select v-model="sortBy" class="px-3 py-2 border rounded-md shadow-sm">
+                    <option value="title">Title</option>
+                    <option value="description">Description</option>
+                    <option value="status">Status</option>
+                    <option value="category">Category</option>
+                    <option value="due_date">Due Date</option>
+                    <option value="created_at">Created At</option>
+                    <option value="updated_at">Updated At</option>
+                </select>
+            </div>
+
+            <!-- Sort Order -->
+            <div>
+                <label class="block text-sm font-medium">Order</label>
+                <select v-model="sortOrder" class="px-3 py-2 border rounded-md shadow-sm">
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                </select>
+            </div>
+        </div>
+
+        <!--ilter Modal -->
+        <transition name="fade">
+            <div v-if="showFilterModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white p-6 rounded-lg shadow-lg w-96 relative">
+                    <h2 class="text-lg font-bold mb-4">Filters</h2>
+
+                    <!-- Status Filter -->
+                    <label class="block mb-2 font-medium">Status</label>
+                    <select v-model="filterStatus" class="w-full px-3 py-2 border rounded-md shadow-sm mb-4">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                    </select>
+
+                    <!-- Category Filter -->
+                    <label class="block mb-2 font-medium">Category</label>
+                    <select v-model="filterCategory" class="w-full px-3 py-2 border rounded-md shadow-sm mb-4">
+                        <option value="">All Categories</option>
+                        <option value="Work">Work</option>
+                        <option value="Personal">Personal</option>
+                        <option value="Urgent">Urgent</option>
+                    </select>
+
+                    <!-- Show Deleted Checkbox -->
+                    <label class="flex items-center space-x-2 cursor-pointer mb-4">
+                        <input type="checkbox" v-model="showDeleted" class="cursor-pointer">
+                        <span>Show Deleted</span>
+                    </label>
+
+                    <!-- Buttons -->
+                    <div class="flex justify-between">
+                        <button @click="clearFilters" 
+                            class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
+                            Clear Filters
+                        </button>
+
+                        <button @click="toggleFilterModal" 
+                            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </transition>
         
         <RouterLink :to="{ name: 'TaskCreate' }" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Create Task</RouterLink>
     </div>
@@ -221,7 +212,7 @@ const statusClass = (status: string) => `status-${status}`;
                         <th scope="col" class="px-6 py-3">Description</th>
                         <th scope="col" class="px-6 py-3">Category</th>
                         <th scope="col" class="px-6 py-3">Status</th>
-                        <th>Due Date</th> <!-- ✅ New Column -->
+                        <th>Due Date</th> 
                         <th scope="col" class="px-6 py-3 text-center">Actions</th>
                     </tr>
                 </thead>
@@ -316,5 +307,12 @@ const statusClass = (status: string) => `status-${status}`;
 .status-completed {
     background-color: #10b981;
     color: #fff;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
 }
 </style>

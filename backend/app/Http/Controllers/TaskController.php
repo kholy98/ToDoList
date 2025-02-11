@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -152,4 +153,26 @@ class TaskController extends Controller
 
         return response()->json(['message' => 'Task restored', 'task' => $task]);
     }
+
+
+    public function summary()
+    {
+        $now = Carbon::now();
+
+        $totalTasks = Task::count();
+        $pendingTasks = Task::where('status', 'pending')->count();
+        $completedTasks = Task::where('status', 'completed')->count();
+        $overdueTasks = Task::whereNotNull('due_date')
+                            ->where('due_date', '<', $now)
+                            ->where('status', '!=', 'completed')
+                            ->count();
+
+        return response()->json([
+            'total' => $totalTasks,
+            'pending' => $pendingTasks,
+            'completed' => $completedTasks,
+            'overdue' => $overdueTasks,
+        ]);
+    }
+
 }
