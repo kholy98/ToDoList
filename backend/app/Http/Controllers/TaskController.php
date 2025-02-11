@@ -14,7 +14,7 @@ class TaskController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Task::query()->withTrashed(); // ✅ Includes soft deleted tasks
+        $query = Task::query()->withTrashed();
 
         // Apply Search
         if ($request->filled('search')) {
@@ -27,24 +27,24 @@ class TaskController extends Controller
             });
         }
 
-        // ✅ Apply Filters for Status
+
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // ✅ Apply Filters for Category
+
         if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
 
-        // ✅ Apply Due Date Filter (Single Date)
+
         if ($request->filled('due_date')) {
             $query->whereDate('due_date', '=', $request->due_date);
         }
 
-        // ✅ Apply Due Date Range Filter Correctly
+
         if ($request->filled('due_date_from') && $request->filled('due_date_to')) {
-            $dueDateFrom = date('Y-m-d', strtotime($request->due_date_from)); // Convert to proper format
+            $dueDateFrom = date('Y-m-d', strtotime($request->due_date_from));
             $dueDateTo = date('Y-m-d', strtotime($request->due_date_to));
 
             $query->whereBetween('due_date', [$dueDateFrom, $dueDateTo]);
@@ -56,21 +56,21 @@ class TaskController extends Controller
             $query->whereDate('due_date', '<=', $dueDateTo);
         }
 
-        // ✅ Apply Soft Delete Filter (Show Only Deleted Tasks)
+
         if ($request->has('deleted') && $request->deleted == 1) {
             $query->onlyTrashed();
         }
 
-        // Apply Sorting
-        $sortBy = $request->query('sortBy', 'created_at'); // Default sort column
-        $sortOrder = $request->query('sortOrder', 'desc'); // Default order
+
+        $sortBy = $request->query('sortBy', 'created_at');
+        $sortOrder = $request->query('sortOrder', 'desc');
 
         if (in_array($sortBy, ['title', 'description', 'status', 'category', 'due_date', 'created_at', 'updated_at']) &&
             in_array($sortOrder, ['asc', 'desc'])) {
             $query->orderBy($sortBy, $sortOrder);
         }
 
-        // ✅ Return JSON with pagination
+        
         return response()->json($query->paginate(10));
     }
 
