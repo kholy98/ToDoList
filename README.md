@@ -83,9 +83,3 @@ npm run dev
 ```bash
 php artisan serve
 ```
-
-
-
-
-
-
