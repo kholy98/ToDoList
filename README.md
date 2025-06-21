@@ -86,10 +86,3 @@ php artisan serve
 
 
 
-
-
-
-
-
-
-
